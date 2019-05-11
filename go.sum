@@ -3,6 +3,8 @@ cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 cloud.google.com/go v0.38.0 h1:ROfEUZz+Gh5pa62DJWXSaonyu3StP6EA6lPEXPI6mCo=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/JoshuaDoes/gofuckyourself v0.0.0-20181118040300-9fac3800924b h1:jkmcB+lTi6RE+X003SapChOxXd2LTQQ/H885wvjMZTg=
+github.com/JoshuaDoes/gofuckyourself v0.0.0-20181118040300-9fac3800924b/go.mod h1:lvHrqPn2eekcBHuk4H9DKY2A9N/chi0UYMY9y+HDWyQ=
 github.com/antchfx/xmlquery v1.0.0 h1:YuEPqexGG2opZKNc9JU3Zw6zFXwC47wNcy6/F8oKsrM=
 github.com/antchfx/xmlquery v1.0.0/go.mod h1:/+CnyD/DzHRnv2eRxrVbieRU/FIF6N0C+7oTtyUtCKk=
 github.com/antchfx/xpath v0.0.0-20190319080838-ce1d48779e67 h1:uj4UuiIs53RhHSySIupR1TEIouckjSfnljF3QbN1yh0=
@@ -18,6 +20,8 @@ github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5a
 github.com/google/martian v2.1.0+incompatible/go.mod h1:9I4somxYTbIHy5NJKHRl3wXiIaQGbYVAs8BPL6v8lEs=
 github.com/google/pprof v0.0.0-20181206194817-3ea8567a2e57/go.mod h1:zfwlbNMJ+OItoe0UupaVj+oy1omPYYDuagoSzA8v9mc=
 github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+vpHVxEJEs9eg=
+github.com/grokify/html-strip-tags-go v0.0.0-20190424092004-025bd760b278 h1:DZo48DQFIDo/YWjUeFip1dfJztBhRuaxfUnPd+gAfcs=
+github.com/grokify/html-strip-tags-go v0.0.0-20190424092004-025bd760b278/go.mod h1:Xk7G0nwBiIloTMbLddk4WWJOqi4i/JLhadLd0HUXO30=
 github.com/hashicorp/golang-lru v0.5.0 h1:CL2msUPvZTLb5O648aiLNJw3hnBxN2+1Jq8rCOH9wdo=
 github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/jlubawy/go-boilerpipe v0.4.0 h1:9OWr5DBO6q+Dq9qv/2+XIIzJ0+okCE/YMZ0Ztn3daJw=

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"cloud.google.com/go/translate"
 	"encoding/json"
+	"fmt"
 	"github.com/antchfx/xmlquery"
 	"golang.org/x/net/context"
 	"golang.org/x/text/language"
@@ -15,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	// "github.com/grokify/html-strip-tags-go"
 )
 
 type Vocabulary struct {
@@ -78,6 +80,11 @@ func main() {
 }
 
 func getVocabulary(inputPath, nativeLanguage, targetLanguage string, client *translate.Client, ctx context.Context) Vocabulary {
+	blacklist := map[string]bool{
+		"pooped":  true,
+		"fucking": true,
+		"fucked":  true,
+	}
 	series := []Series{}
 	seriesNames, err := ioutil.ReadDir(inputPath)
 	if err != nil {
@@ -103,8 +110,13 @@ func getVocabulary(inputPath, nativeLanguage, targetLanguage string, client *tra
 					episodes := []Episode{}
 					for _, episodeName := range episodeNames {
 						if !episodeName.IsDir() && episodeName.Name() != ".DS_Store" {
+							fmt.Println("Getting vocabulary for " + seriesName.Name() + " " + episodeName.Name())
 							path := inputPath + seriesName.Name() + "/" + seasonName.Name() + "/" + targetLanguage + "/" + episodeName.Name()
-							vocabulary := getVocables(path, client, ctx)
+							vocabulary := getVocables(path, client, ctx, blacklist)
+							for _, s := range vocabulary {
+								blacklist[s.Original] = true
+							}
+							fmt.Printf("Got %d Blacklist at %d \n", len(vocabulary), len(blacklist))
 							episodes = append(episodes, Episode{Episode: getEpisodeNumber(episodeName.Name()), Vocabulary: vocabulary})
 						}
 					}
@@ -121,10 +133,10 @@ func getVocabulary(inputPath, nativeLanguage, targetLanguage string, client *tra
 	return vocabulary
 }
 
-func getVocables(path string, client *translate.Client, ctx context.Context) []Vocable {
+func getVocables(path string, client *translate.Client, ctx context.Context, blacklist map[string]bool) []Vocable {
 	vocables := []Vocable{}
 
-	topVocables := parse(path, 50, 6)
+	topVocables := parse(path, 50, 8, blacklist)
 	i := 0
 	for _, el := range topVocables {
 		w := strings.ToLower(el.Word)
@@ -196,7 +208,7 @@ type Cnt struct {
 	Word  string
 }
 
-func parse(filepath string, results int, minLength int) []*Cnt {
+func parse(filepath string, results int, minLength int, blacklist map[string]bool) []*Cnt {
 	file, err := os.Open(filepath)
 	if err != nil {
 		panic(err)
@@ -221,7 +233,8 @@ func parse(filepath string, results int, minLength int) []*Cnt {
 			}
 		}
 
-		text := el.InnerText()
+		text := el.OutputXML(false)
+		// text = strip.StripTags(text)
 
 		words := strings.Fields(text)
 
@@ -231,6 +244,10 @@ func parse(filepath string, results int, minLength int) []*Cnt {
 			}
 
 			if len(word) < minLength {
+				continue
+			}
+
+			if _, ok := blacklist[strings.ToLower(word)]; ok {
 				continue
 			}
 
