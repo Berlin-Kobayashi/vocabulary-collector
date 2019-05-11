@@ -17,6 +17,12 @@ func standardizeSpaces(s string) string {
 	return strings.Join(strings.Fields(s), " ")
 }
 
+type Cnt struct {
+	Count int
+	Begin []string
+	End []string
+}
+
 func parse(filepath string) {
 	file, err := os.Open(filepath)
 	if err!= nil {
@@ -30,15 +36,17 @@ func parse(filepath string) {
 
 	list := xmlquery.Find(doc, "//tt/body/div/p")
 
-	counts := make(map[string]int)
+	counts := make(map[string]*Cnt)
 
 	for _, el := range list {
+		var begin string
+		var end string
 		for _, attr := range el.Attr {
 			if attr.Name.Local == "begin" {
+				begin = attr.Value
 				// 34265481249 ÷10000000 ÷ 60
-				//fmt.Println(attr.Value)
 			} else if attr.Name.Local == "end" {
-				//fmt.Println(attr.Value)
+				end = attr.Value
 			}
 		}
 
@@ -52,14 +60,19 @@ func parse(filepath string) {
 		for _, word := range words {
 
 			if _, ok := counts[word] ; !ok {
-				counts[word] = 1
+				counts[word] = &Cnt{
+					Count: 1,
+					Begin: []string{begin},
+					End: []string{end},
+				}
 			} else {
-				counts[word] = counts[word] + 1
+				counts[word].Count = counts[word].Count + 1
+				counts[word].Begin = append(counts[word].Begin, begin)
+				counts[word].End = append(counts[word].End, end)
 			}
 
 
 		}
-		//fmt.Println(cleaned)
 	}
 
 	fmt.Println(counts)
