@@ -15,3 +15,5 @@ netflix/**
 output/**
 !output/.keep
 google.json
+tmp/
+.idea/
