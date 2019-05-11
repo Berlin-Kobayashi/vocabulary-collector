@@ -60,8 +60,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
 	}
-	translation := translateText("shoot", "en", "de", client, ctx)
-	result := getVocabulary("/go/src/github.com/DanShu93/vocabulary-collector/netflix/", "de", "en_us")
+	result := getVocabulary("/go/src/github.com/DanShu93/vocabulary-collector/netflix/", "de", "en_us", client, ctx)
 
 	marshaled, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
@@ -71,7 +70,7 @@ func main() {
 	fmt.Println(string(marshaled))
 }
 
-func getVocabulary(inputPath, nativeLanguage, targetLanguage string) Vocabulary {
+func getVocabulary(inputPath, nativeLanguage, targetLanguage string, client *translate.Client, ctx context.Context) Vocabulary {
 	series := []Series{}
 	seriesNames, err := ioutil.ReadDir(inputPath)
 	if err != nil {
@@ -97,7 +96,8 @@ func getVocabulary(inputPath, nativeLanguage, targetLanguage string) Vocabulary 
 					episodes := []Episode{}
 					for _, episodeName := range episodeNames {
 						if !episodeName.IsDir() && episodeName.Name() != ".DS_Store" {
-							vocabulary := []Vocable{}
+							path := inputPath + seriesName.Name() + "/" + seasonName.Name() + "/" + targetLanguage + "/" + episodeName.Name()
+							vocabulary := getVocables(path, client, ctx)
 							episodes = append(episodes, Episode{Episode: getEpisodeNumber(episodeName.Name()), Vocabulary: vocabulary})
 						}
 					}
@@ -112,6 +112,12 @@ func getVocabulary(inputPath, nativeLanguage, targetLanguage string) Vocabulary 
 	vocabulary := Vocabulary{NativeLanguages: []NativeLanguage{{NativeLanguage: nativeLanguage, TargetLanguages: []TargetLanguage{{TargetLanguage: targetLanguage, Series: series}}}}}
 
 	return vocabulary
+}
+
+func getVocables(path string, client *translate.Client, ctx context.Context) []Vocable {
+	translation := translateText("shoot", "en", "de", client, ctx)
+
+	return []Vocable{{Original: "shoot", Translation: translation, Seconds: 5}}
 }
 
 func getSeasonNumber(seasonName string) int {
