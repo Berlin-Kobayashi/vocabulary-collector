@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"regexp"
+	"strconv"
+	"strings"
 )
 
 type Vocabulary struct {
@@ -21,8 +24,8 @@ type TargetLanguage struct {
 }
 
 type Series struct {
-	Name    string `json:"name"`
-	Seasons Season `json:"seasons"`
+	Name    string   `json:"name"`
+	Seasons []Season `json:"seasons"`
 }
 
 type Season struct {
@@ -54,7 +57,7 @@ func main() {
 	//	log.Fatalf("Failed to create client: %v", err)
 	//}
 
-	result := getVocabulary("/go/src/github.com/DanShu93/vocabulary-collector/netflix/")
+	result := getVocabulary("/go/src/github.com/DanShu93/vocabulary-collector/netflix/", "de", "en_us")
 
 	marshaled, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
@@ -64,34 +67,63 @@ func main() {
 	fmt.Println(string(marshaled))
 }
 
-func getVocabulary(inputPath string) Vocabulary {
-	vocabulary := Vocabulary{NativeLanguages: []NativeLanguage{}}
-	nativeLanguageNames, err := ioutil.ReadDir(inputPath)
+func getVocabulary(inputPath, nativeLanguage, targetLanguage string) Vocabulary {
+	series := []Series{}
+	seriesNames, err := ioutil.ReadDir(inputPath)
 	if err != nil {
 		panic(err)
 	}
 
-	for _, n := range nativeLanguageNames {
-		if n.IsDir() {
-			targetLanguages := []TargetLanguage{}
-			targetLanguageNames, err := ioutil.ReadDir(inputPath + n.Name())
+	for _, seriesName := range seriesNames {
+		if seriesName.IsDir() {
+			seasonNames, err := ioutil.ReadDir(inputPath + seriesName.Name())
 			if err != nil {
 				panic(err)
 			}
 
-			for _, t := range targetLanguageNames {
-				if t.IsDir() {
-					targetLanguages = append(targetLanguages, TargetLanguage{TargetLanguage: t.Name(), Series: []Series{}})
-
-					_, err := ioutil.ReadDir(inputPath + n.Name() + "/" + t.Name())
+			seasons := []Season{}
+			for _, seasonName := range seasonNames {
+				if seasonName.IsDir() {
+					seasonNumber := getSeasonNumber(seasonName.Name())
+					episodeNames, err := ioutil.ReadDir(inputPath + seriesName.Name() + "/" + seasonName.Name() + "/" + targetLanguage)
 					if err != nil {
 						panic(err)
 					}
+
+					episodes := []Episode{}
+					for _, episodeName := range episodeNames {
+						if !episodeName.IsDir() && episodeName.Name() != ".DS_Store" {
+							vocabulary := []Vocable{}
+							episodes = append(episodes, Episode{Episode: getEpisodeNumber(episodeName.Name()), Vocabulary: vocabulary})
+						}
+					}
+					seasons = append(seasons, Season{Season: seasonNumber, Episodes: episodes})
 				}
 			}
-			vocabulary.NativeLanguages = append(vocabulary.NativeLanguages, NativeLanguage{NativeLanguage: n.Name(), TargetLanguages: targetLanguages})
+			newSeries := Series{Name: seriesName.Name(), Seasons: seasons}
+			series = append(series, newSeries)
 		}
 	}
 
+	vocabulary := Vocabulary{NativeLanguages: []NativeLanguage{{NativeLanguage: nativeLanguage, TargetLanguages: []TargetLanguage{{TargetLanguage: targetLanguage, Series: series}}}}}
+
 	return vocabulary
+}
+
+func getSeasonNumber(seasonName string) int {
+	seasonName = strings.Replace(seasonName, "Season ", "", -1)
+
+	seasonNumber, _ := strconv.Atoi(seasonName)
+
+	return seasonNumber
+}
+
+func getEpisodeNumber(episodeName string) int {
+	re := regexp.MustCompile(`.*E(.*)$`)
+
+	match := re.ReplaceAllString(episodeName, "$1")
+
+	episodeNumber, _ := strconv.Atoi(match)
+
+	return episodeNumber
 }
