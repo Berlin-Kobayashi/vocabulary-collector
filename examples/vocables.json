@@ -1,0 +1,32 @@
+{
+  "nativeLanguages": [
+    {
+      "nativeLanguage": "de",
+      "targetLanguages": [
+        {
+          "targetLanguage": "en",
+          "series": [
+            {
+              "name": "Friends",
+              "seasons": {
+                "season": 1,
+                "episodes": [
+                  {
+                    "episode": 1,
+                    "vocabulary": [
+                      {
+                        "original": "car",
+                        "translation": "Auto",
+                        "seconds": 30
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
