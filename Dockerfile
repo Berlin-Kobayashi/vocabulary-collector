@@ -4,6 +4,6 @@ WORKDIR /go/src/github.com/DanShu93/vocabulary-collector
 
 COPY . .
 
-RUN go get ./...
+RUN GO111MODULE=on go get ./...
 
-CMD go run app/app.go
+CMD GO111MODULE=on go run app/app.go

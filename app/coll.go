@@ -9,10 +9,6 @@ import (
 	"strings"
 )
 
-func main() {
-	parse("/home/ska/lab/go/src/github.com/DanShu93/vocabulary-collector/tmp/Streamlingo/Friends/Season 1/en_us/S01E01")
-}
-
 func standardizeSpaces(s string) string {
 	return strings.Join(strings.Fields(s), " ")
 }
@@ -20,12 +16,12 @@ func standardizeSpaces(s string) string {
 type Cnt struct {
 	Count int
 	Begin []string
-	End []string
+	End   []string
 }
 
 func parse(filepath string) {
 	file, err := os.Open(filepath)
-	if err!= nil {
+	if err != nil {
 		panic(err)
 	}
 
@@ -59,18 +55,17 @@ func parse(filepath string) {
 
 		for _, word := range words {
 
-			if _, ok := counts[word] ; !ok {
+			if _, ok := counts[word]; !ok {
 				counts[word] = &Cnt{
 					Count: 1,
 					Begin: []string{begin},
-					End: []string{end},
+					End:   []string{end},
 				}
 			} else {
 				counts[word].Count = counts[word].Count + 1
 				counts[word].Begin = append(counts[word].Begin, begin)
 				counts[word].End = append(counts[word].End, end)
 			}
-
 
 		}
 	}
