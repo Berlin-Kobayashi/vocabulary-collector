@@ -1,16 +1,20 @@
 package main
 
 import (
+	"bufio"
 	"cloud.google.com/go/translate"
 	"encoding/json"
-	"fmt"
+	"github.com/antchfx/xmlquery"
 	"golang.org/x/net/context"
 	"golang.org/x/text/language"
 	"io/ioutil"
 	"log"
+	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 type Vocabulary struct {
@@ -60,14 +64,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
 	}
-	result := getVocabulary("/go/src/github.com/DanShu93/vocabulary-collector/netflix/", "de", "en_us", client, ctx)
+	result := getVocabulary("/Users/danshu/go/src/vocabulary-collector/netflix/", "de", "en_us", client, ctx)
 
 	marshaled, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(string(marshaled))
+	e := ioutil.WriteFile("/Users/danshu/go/src/vocabulary-collector/output/vocabulary.json", marshaled, 0666)
+	if e != nil {
+		panic(e)
+	}
 }
 
 func getVocabulary(inputPath, nativeLanguage, targetLanguage string, client *translate.Client, ctx context.Context) Vocabulary {
@@ -115,9 +122,32 @@ func getVocabulary(inputPath, nativeLanguage, targetLanguage string, client *tra
 }
 
 func getVocables(path string, client *translate.Client, ctx context.Context) []Vocable {
-	translation := translateText("shoot", "en", "de", client, ctx)
+	vocables := []Vocable{}
 
-	return []Vocable{{Original: "shoot", Translation: translation, Seconds: 5}}
+	topVocables := parse(path, 50, 6)
+	i := 0
+	for _, el := range topVocables {
+		w := strings.ToLower(el.Word)
+		translation := translateText(w, "en", "de", client, ctx)
+		if strings.ToLower(translation) != w {
+			seconds := parseSeconds(el.Begin[0])
+			vocable := Vocable{Original: w, Translation: translation, Seconds: seconds}
+			vocables = append(vocables, vocable)
+			i++
+		}
+		if i >= 10 {
+			break
+		}
+	}
+
+	return vocables
+}
+
+func parseSeconds(s string) int {
+	s = s[:len(s)-5]
+	i, _ := strconv.Atoi(s)
+
+	return i / 1000
 }
 
 func getSeasonNumber(seasonName string) int {
@@ -157,4 +187,90 @@ func translateText(text, from, to string, client *translate.Client, ctx context.
 	}
 
 	return translations[0].Text
+}
+
+type Cnt struct {
+	Count int
+	Begin []string
+	End   []string
+	Word  string
+}
+
+func parse(filepath string, results int, minLength int) []*Cnt {
+	file, err := os.Open(filepath)
+	if err != nil {
+		panic(err)
+	}
+
+	reader := bufio.NewReader(file)
+	doc, err := xmlquery.Parse(reader)
+
+	list := xmlquery.Find(doc, "//tt/body/div/p")
+
+	counts := make(map[string]*Cnt)
+
+	for _, el := range list {
+		var begin string
+		var end string
+		for _, attr := range el.Attr {
+			if attr.Name.Local == "begin" {
+				begin = attr.Value
+				// 34265481249 ÷10000000 ÷ 60
+			} else if attr.Name.Local == "end" {
+				end = attr.Value
+			}
+		}
+
+		text := el.InnerText()
+
+		words := strings.Fields(text)
+
+		for _, word := range words {
+			if !IsLetter(word) {
+				continue
+			}
+
+			if len(word) < minLength {
+				continue
+			}
+
+			if _, ok := counts[word]; !ok {
+				counts[word] = &Cnt{
+					Count: 1,
+					Begin: []string{begin},
+					End:   []string{end},
+					Word:  word,
+				}
+			} else {
+				counts[word].Count = counts[word].Count + 1
+				counts[word].Begin = append(counts[word].Begin, begin)
+				counts[word].End = append(counts[word].End, end)
+			}
+		}
+	}
+
+	ranks := make([]*Cnt, 0, len(counts))
+
+	for key := range counts {
+		ranks = append(ranks, counts[key])
+	}
+
+	sort.Slice(ranks[:], func(i, j int) bool {
+		return ranks[i].Count > ranks[j].Count
+	})
+
+	if len(ranks) > results {
+		ranks = ranks[:results]
+	}
+
+	return ranks
+}
+
+func IsLetter(s string) bool {
+	for _, r := range s {
+		if !unicode.IsLetter(r) {
+			return false
+		}
+	}
+	return true
 }
