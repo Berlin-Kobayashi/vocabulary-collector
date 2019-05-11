@@ -14,7 +14,7 @@ func main() {
 	results := parse("tmp/Streamlingo/Friends/Season 1/en_us/S01E01", 30, 4)
 
 	for _, el := range results {
-		fmt.Printf("%s %s %s\n", el.Word, el.Begin[0], el.End[0])
+		fmt.Printf("%d %s %s %s\n", el.Count, el.Word, el.Begin[0], el.End[0])
 	}
 }
 
@@ -35,7 +35,7 @@ func parse(filepath string, results int, minLength int) []*Cnt {
 		panic(err)
 	}
 
-	reg := regexp.MustCompile("[^a-zA-Z üöä]")
+	reg := regexp.MustCompile(`([a-zA-Z])+`)
 
 	reader := bufio.NewReader(file)
 	doc, err := xmlquery.Parse(reader)
@@ -58,14 +58,13 @@ func parse(filepath string, results int, minLength int) []*Cnt {
 
 		text := el.InnerText()
 
-
-		res := reg.ReplaceAllString(text, " ")
-
-		cleaned := standardizeSpaces(res)
-
-		words := strings.Fields(cleaned)
+		words := strings.Fields(text)
 
 		for _, word := range words {
+			if ! reg.MatchString(word) {
+				continue
+			}
+
 			if len(word) < minLength {
 				continue
 			}
@@ -87,16 +86,12 @@ func parse(filepath string, results int, minLength int) []*Cnt {
 
 	ranks := make([]*Cnt, 0, len(counts))
 
-	sort.Slice(ranks[:], func(i, j int) bool {
-		return ranks[i].Count > ranks[j].Count
-	})
-
 	for key := range counts {
 		ranks = append(ranks, counts[key])
 	}
 
 	sort.Slice(ranks[:], func(i, j int) bool {
-		return ranks[i].Count < ranks[j].Count
+		return ranks[i].Count > ranks[j].Count
 	})
 
 
