@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/antchfx/xmlquery"
 	"os"
-	"regexp"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 func main() {
@@ -35,8 +35,6 @@ func parse(filepath string, results int, minLength int) []*Cnt {
 		panic(err)
 	}
 
-	reg := regexp.MustCompile(`([a-zA-Z])+`)
-
 	reader := bufio.NewReader(file)
 	doc, err := xmlquery.Parse(reader)
 
@@ -61,7 +59,7 @@ func parse(filepath string, results int, minLength int) []*Cnt {
 		words := strings.Fields(text)
 
 		for _, word := range words {
-			if ! reg.MatchString(word) {
+			if ! IsLetter(word) {
 				continue
 			}
 
@@ -96,4 +94,13 @@ func parse(filepath string, results int, minLength int) []*Cnt {
 
 
 	return ranks[:results]
+}
+
+func IsLetter(s string) bool {
+	for _, r := range s {
+		if !unicode.IsLetter(r) {
+			return false
+		}
+	}
+	return true
 }
