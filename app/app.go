@@ -152,6 +152,10 @@ func getVocables(path string, client *translate.Client, ctx context.Context, bla
 		}
 	}
 
+	sort.Slice(vocables[:], func(i, j int) bool {
+		return vocables[i].Seconds < vocables[j].Seconds
+	})
+
 	return vocables
 }
 
